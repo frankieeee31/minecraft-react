@@ -1,11 +1,10 @@
-import { useState } from 'react'
-import MinecraftGame from './components/MinecraftGame'
+import DeepIOGame from './components/DeepIOGame'
 import './App.css'
 
 function App() {
   return (
     <div className="App">
-      <MinecraftGame />
+      <DeepIOGame />
     </div>
   )
 }
