@@ -290,7 +290,7 @@ const DeepIOGame = () => {
     
     window.addEventListener('resize', handleResize);
     
-    const gameLoop = setInterval(updateGame, 16); // 60 FPS
+    const gameLoop = setInterval(updateGame, 33); // 30 FPS for better performance
     return () => {
       clearInterval(gameLoop);
       window.removeEventListener('resize', handleResize);
@@ -345,7 +345,7 @@ const DeepIOGame = () => {
     const food = [];
     const state = gameStateRef.current;
     
-    for (let i = 0; i < 800; i++) {
+    for (let i = 0; i < 300; i++) { // Reduced from 800 to 300 for better performance
       const y = Math.random() * state.gameHeight;
       const zone = state.zones.find(z => y >= z.minDepth && y < z.maxDepth) || state.zones[0];
       
@@ -388,8 +388,9 @@ const DeepIOGame = () => {
     const objects = [];
     const state = gameStateRef.current;
     
+    // Reduced environment objects for better performance
     // Add kelp forests in shallow areas
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 20; i++) { // Reduced from 50 to 20
       objects.push({
         type: 'kelp',
         x: Math.random() * state.gameWidth,
@@ -400,7 +401,7 @@ const DeepIOGame = () => {
     }
     
     // Add coral reefs
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 15; i++) { // Reduced from 30 to 15
       objects.push({
         type: 'coral',
         x: Math.random() * state.gameWidth,
@@ -411,7 +412,7 @@ const DeepIOGame = () => {
     }
     
     // Add rocks and caves in deep areas
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 20; i++) { // Reduced from 40 to 20
       objects.push({
         type: 'rock',
         x: Math.random() * state.gameWidth,
@@ -426,7 +427,7 @@ const DeepIOGame = () => {
 
   const initializeBubbles = () => {
     const bubbles = [];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 40; i++) { // Reduced from 100 to 40 for better performance
       bubbles.push(createBubble());
     }
     gameStateRef.current.bubbles = bubbles;
@@ -446,7 +447,7 @@ const DeepIOGame = () => {
 
   const spawnCreatures = () => {
     const creatures = [];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 30; i++) { // Reduced from 100 to 30 for better performance
       const tier = Math.floor(Math.random() * 3) + 1;
       const animalTypes = animalTiers[tier];
       const animalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
@@ -470,14 +471,20 @@ const DeepIOGame = () => {
     gameStateRef.current.creatures = creatures;
   };
 
+  // Frame counter for performance optimization
+  let frameCount = 0;
+
   const updateGame = () => {
     const state = gameStateRef.current;
+    frameCount++;
     
     // Update player movement
     updatePlayerMovement();
     
-    // Update creatures AI
-    updateCreaturesAI();
+    // Update creatures AI only every 3rd frame for performance
+    if (frameCount % 3 === 0) {
+      updateCreaturesAI();
+    }
     
     // Update particles and bubbles
     updateParticles();
@@ -1198,13 +1205,7 @@ const DeepIOGame = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    // Create off-screen canvas for advanced post-processing
-    const offscreenCanvas = document.createElement('canvas');
-    offscreenCanvas.width = canvas.width;
-    offscreenCanvas.height = canvas.height;
-    const offscreenCtx = offscreenCanvas.getContext('2d');
-    
-    const ctx = offscreenCtx; // Render to offscreen first
+    const ctx = canvas.getContext('2d');
     const state = gameStateRef.current;
     const player = state.player;
     const time = Date.now() * 0.001;
@@ -1469,8 +1470,8 @@ const DeepIOGame = () => {
   };
 
   const drawWaterCaustics = (ctx, zone, time, gameWidth) => {
-    // Ultra-realistic water caustics with refraction simulation
-    const causticLayers = 4;
+    // Optimized water caustics - reduced layers from 4 to 2
+    const causticLayers = 2;
     const causticIntensity = 0.4 + Math.sin(time * 0.8) * 0.2;
     
     for (let layer = 0; layer < causticLayers; layer++) {
@@ -1481,21 +1482,20 @@ const DeepIOGame = () => {
       ctx.globalCompositeOperation = 'screen';
       ctx.globalAlpha = (causticIntensity / causticLayers) * (1 - layer * 0.15);
       
-      // Create complex caustic network patterns
-      const cellSize = 60 * layerScale;
-      const numCellsX = Math.ceil(gameWidth / cellSize) + 2;
-      const numCellsY = Math.ceil((zone.maxDepth - zone.minDepth) / cellSize) + 2;
+      // Reduced cell count for better performance
+      const cellSize = 80 * layerScale; // Larger cells = fewer to draw
+      const numCellsX = Math.ceil(gameWidth / cellSize) + 1;
+      const numCellsY = Math.ceil((zone.maxDepth - zone.minDepth) / cellSize) + 1;
       
       for (let cellX = -1; cellX < numCellsX; cellX++) {
         for (let cellY = -1; cellY < numCellsY; cellY++) {
           const baseX = cellX * cellSize + Math.sin(time * layerSpeed * 0.4 + cellX * 0.3) * 25;
           const baseY = zone.minDepth + cellY * cellSize + Math.cos(time * layerSpeed * 0.3 + cellY * 0.4) * 15;
           
-          // Create caustic cell with multiple focal points
+          // Reduced focal points from 3 to 2
           const focalPoints = [
-            { x: baseX + cellSize * 0.2, y: baseY + cellSize * 0.3 },
-            { x: baseX + cellSize * 0.7, y: baseY + cellSize * 0.6 },
-            { x: baseX + cellSize * 0.5, y: baseY + cellSize * 0.8 }
+            { x: baseX + cellSize * 0.3, y: baseY + cellSize * 0.4 },
+            { x: baseX + cellSize * 0.7, y: baseY + cellSize * 0.6 }
           ];
           
           focalPoints.forEach((focal, focalIndex) => {
@@ -1503,14 +1503,14 @@ const DeepIOGame = () => {
             const intensity = 0.6 + Math.sin(focalTime * 1.2) * 0.4;
             const size = 20 + Math.cos(focalTime * 0.8) * 8;
             
-            // Caustic gradient with bright center
+            // Enhanced caustic gradient
             const causticGradient = ctx.createRadialGradient(
               focal.x, focal.y, 0,
               focal.x, focal.y, size
             );
-            causticGradient.addColorStop(0, `rgba(255, 255, 255, ${intensity})`);
-            causticGradient.addColorStop(0.3, `rgba(200, 230, 255, ${intensity * 0.7})`);
-            causticGradient.addColorStop(0.6, `rgba(150, 200, 255, ${intensity * 0.4})`);
+            causticGradient.addColorStop(0, `rgba(255, 255, 255, ${intensity * 0.8})`);
+            causticGradient.addColorStop(0.3, `rgba(200, 240, 255, ${intensity * 0.5})`);
+            causticGradient.addColorStop(0.7, `rgba(150, 200, 255, ${intensity * 0.2})`);
             causticGradient.addColorStop(1, 'rgba(150, 200, 255, 0)');
             
             ctx.fillStyle = causticGradient;
@@ -1518,24 +1518,6 @@ const DeepIOGame = () => {
             ctx.arc(focal.x, focal.y, size, 0, Math.PI * 2);
             ctx.fill();
           });
-          
-          // Connect focal points with realistic light paths
-          ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * causticIntensity})`;
-          ctx.lineWidth = 1 + layer * 0.5;
-          
-          for (let i = 0; i < focalPoints.length; i++) {
-            const point1 = focalPoints[i];
-            const point2 = focalPoints[(i + 1) % focalPoints.length];
-            
-            // Create curved connection simulating light refraction
-            const midX = (point1.x + point2.x) / 2 + Math.sin(time * layerSpeed + i) * 15;
-            const midY = (point1.y + point2.y) / 2 + Math.cos(time * layerSpeed + i) * 10;
-            
-            ctx.beginPath();
-            ctx.moveTo(point1.x, point1.y);
-            ctx.quadraticCurveTo(midX, midY, point2.x, point2.y);
-            ctx.stroke();
-          }
         }
       }
       
@@ -1572,21 +1554,20 @@ const DeepIOGame = () => {
   };
 
   const drawGodRays = (ctx, zone, time, gameWidth) => {
-    // Ultra-realistic volumetric god rays with scattering
-    const rayCount = 8;
-    const sunAngle = Math.sin(time * 0.05) * 0.3; // Slowly moving sun
+    // Optimized volumetric god rays - reduced count and layers
+    const rayCount = 5; // Reduced from 8
+    const sunAngle = Math.sin(time * 0.05) * 0.3;
     
     for (let rayIndex = 0; rayIndex < rayCount; rayIndex++) {
       const raySpacing = gameWidth / (rayCount + 1);
       const baseRayX = raySpacing * (rayIndex + 1);
       
-      // Individual ray properties
       const rayX = baseRayX + Math.sin(time * 0.08 + rayIndex * 0.7) * 150;
       const rayIntensity = 0.15 + Math.sin(time * 0.12 + rayIndex) * 0.08;
       const rayWidth = 35 + Math.sin(time * 0.15 + rayIndex * 0.5) * 15;
       
-      // Multi-layer volumetric rendering
-      for (let layer = 0; layer < 4; layer++) {
+      // Reduced layers from 4 to 2
+      for (let layer = 0; layer < 2; layer++) {
         const layerAlpha = rayIntensity * (1 - layer * 0.2);
         const layerWidth = rayWidth * (1 + layer * 0.3);
         const layerOffset = layer * 3;
@@ -1623,14 +1604,14 @@ const DeepIOGame = () => {
         ctx.closePath();
         ctx.fill();
         
-        // Add volumetric scattering particles
+        // Add volumetric scattering particles (reduced from 20 to 8)
         if (layer === 0) {
           ctx.globalCompositeOperation = 'screen';
           ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
           
-          for (let particle = 0; particle < 20; particle++) {
+          for (let particle = 0; particle < 8; particle++) {
             const particleX = rayX + (Math.random() - 0.5) * layerWidth;
-            const particleY = zone.minDepth + (particle / 20) * rayDepth + Math.sin(time * 2 + particle) * 20;
+            const particleY = zone.minDepth + (particle / 8) * rayDepth + Math.sin(time * 2 + particle) * 20;
             const particleSize = 1 + Math.random() * 2;
             const particleAlpha = Math.sin(time * 3 + particle) * 0.5 + 0.5;
             
@@ -2024,15 +2005,32 @@ const DeepIOGame = () => {
   const drawBubbles = (ctx, state) => {
     state.bubbles.forEach(bubble => {
       ctx.globalAlpha = bubble.opacity * bubble.life;
-      ctx.fillStyle = '#87CEEB';
+      
+      // Enhanced bubble with gradient
+      const bubbleGradient = ctx.createRadialGradient(
+        bubble.x - bubble.size * 0.3, bubble.y - bubble.size * 0.3, 0,
+        bubble.x, bubble.y, bubble.size
+      );
+      bubbleGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+      bubbleGradient.addColorStop(0.3, 'rgba(200, 230, 255, 0.6)');
+      bubbleGradient.addColorStop(0.7, 'rgba(135, 206, 235, 0.4)');
+      bubbleGradient.addColorStop(1, 'rgba(100, 180, 220, 0.2)');
+      
+      ctx.fillStyle = bubbleGradient;
       ctx.beginPath();
       ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
       ctx.fill();
       
-      // Add highlight
-      ctx.fillStyle = '#FFFFFF';
+      // Bright highlight
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
       ctx.beginPath();
-      ctx.arc(bubble.x - bubble.size * 0.3, bubble.y - bubble.size * 0.3, bubble.size * 0.2, 0, Math.PI * 2);
+      ctx.arc(bubble.x - bubble.size * 0.3, bubble.y - bubble.size * 0.3, bubble.size * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Secondary highlight
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.beginPath();
+      ctx.arc(bubble.x + bubble.size * 0.2, bubble.y + bubble.size * 0.2, bubble.size * 0.15, 0, Math.PI * 2);
       ctx.fill();
     });
     ctx.globalAlpha = 1;
@@ -2042,32 +2040,57 @@ const DeepIOGame = () => {
     state.food.forEach(food => {
       const floatY = food.y + Math.sin(food.floatOffset) * 3;
       
-      // Draw glow effect
-      ctx.globalAlpha = food.glowIntensity * 0.5;
-      ctx.fillStyle = food.color;
+      // Enhanced glow effect with gradient
+      ctx.globalAlpha = food.glowIntensity * 0.6;
+      const glowGradient = ctx.createRadialGradient(food.x, floatY, 0, food.x, floatY, food.size * 2);
+      glowGradient.addColorStop(0, food.color + 'AA');
+      glowGradient.addColorStop(0.5, food.color + '66');
+      glowGradient.addColorStop(1, food.color + '00');
+      ctx.fillStyle = glowGradient;
       ctx.beginPath();
-      ctx.arc(food.x, floatY, food.size * 1.5, 0, Math.PI * 2);
+      ctx.arc(food.x, floatY, food.size * 2, 0, Math.PI * 2);
       ctx.fill();
       
-      // Draw main food
+      // Main food body with gradient
       ctx.globalAlpha = 1;
-      ctx.fillStyle = food.color;
+      const foodGradient = ctx.createRadialGradient(
+        food.x - food.size * 0.3, floatY - food.size * 0.3, 0,
+        food.x, floatY, food.size
+      );
+      foodGradient.addColorStop(0, food.color);
+      foodGradient.addColorStop(0.6, food.color + 'DD');
+      foodGradient.addColorStop(1, food.color + '99');
+      ctx.fillStyle = foodGradient;
       ctx.beginPath();
       ctx.arc(food.x, floatY, food.size, 0, Math.PI * 2);
       ctx.fill();
       
-      // Add highlight
-      ctx.fillStyle = '#FFFFFF';
-      ctx.globalAlpha = 0.6;
+      // Brighter highlight
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.globalAlpha = 0.9;
       ctx.beginPath();
-      ctx.arc(food.x - food.size * 0.3, floatY - food.size * 0.3, food.size * 0.2, 0, Math.PI * 2);
+      ctx.arc(food.x - food.size * 0.35, floatY - food.size * 0.35, food.size * 0.3, 0, Math.PI * 2);
       ctx.fill();
     });
     ctx.globalAlpha = 1;
   };
 
   const drawCreatures = (ctx, state) => {
+    const canvas = ctx.canvas;
+    const camera = state.camera;
+    
+    // View frustum culling - only render visible creatures
     state.creatures.forEach(creature => {
+      const screenX = creature.x - camera.x;
+      const screenY = creature.y - camera.y;
+      const margin = creature.size * 2;
+      
+      // Skip if creature is off-screen
+      if (screenX < -margin || screenX > canvas.width + margin ||
+          screenY < -margin || screenY > canvas.height + margin) {
+        return;
+      }
+      
       drawAnimal(ctx, creature, false);
     });
   };
@@ -2143,28 +2166,17 @@ const DeepIOGame = () => {
   const drawInkCloud = (ctx, particle, age) => {
     const currentSize = particle.size + (particle.maxSize - particle.size) * age;
     
-    // Create ink cloud gradient
+    // Enhanced ink cloud with gradient
     const gradient = ctx.createRadialGradient(particle.x, particle.y, 0, particle.x, particle.y, currentSize);
-    gradient.addColorStop(0, particle.color + 'CC');
-    gradient.addColorStop(0.5, particle.color + '66');
+    gradient.addColorStop(0, particle.color + 'DD');
+    gradient.addColorStop(0.4, particle.color + '99');
+    gradient.addColorStop(0.7, particle.color + '44');
     gradient.addColorStop(1, particle.color + '00');
     
     ctx.fillStyle = gradient;
     ctx.beginPath();
     ctx.arc(particle.x, particle.y, currentSize, 0, Math.PI * 2);
     ctx.fill();
-    
-    // Add swirling effect
-    ctx.strokeStyle = particle.color + '80';
-    ctx.lineWidth = 3;
-    for (let i = 0; i < 6; i++) {
-      const spiralRadius = currentSize * 0.7;
-      const angle = age * Math.PI * 4 + (i / 6) * Math.PI * 2;
-      
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, spiralRadius * (0.5 + i * 0.1), angle, angle + Math.PI * 0.3);
-      ctx.stroke();
-    }
   };
 
   const drawElectricShock = (ctx, particle, age) => {
@@ -2252,6 +2264,26 @@ const DeepIOGame = () => {
     const currentAnimal = animalTiers[animal.tier].find(a => a.name === animal.animalType);
     if (!currentAnimal) return;
     
+    // Add bioluminescence glow for deep water creatures
+    const depthGlow = animal.y > 1000 ? Math.min(1, (animal.y - 1000) / 2000) : 0;
+    if (depthGlow > 0) {
+      ctx.save();
+      ctx.globalAlpha = depthGlow * 0.4;
+      const bioGradient = ctx.createRadialGradient(
+        animal.x, animal.y, 0,
+        animal.x, animal.y, animal.size * 2.5
+      );
+      bioGradient.addColorStop(0, currentAnimal.color + 'AA');
+      bioGradient.addColorStop(0.3, currentAnimal.color + '66');
+      bioGradient.addColorStop(0.6, currentAnimal.color + '33');
+      bioGradient.addColorStop(1, currentAnimal.color + '00');
+      ctx.fillStyle = bioGradient;
+      ctx.beginPath();
+      ctx.arc(animal.x, animal.y, animal.size * 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    
     ctx.save();
     ctx.translate(animal.x, animal.y);
     if (animal.rotation) ctx.rotate(animal.rotation);
@@ -2296,44 +2328,25 @@ const DeepIOGame = () => {
     ctx.ellipse(shadowOffset, shadowOffset, animal.size, animal.size * 0.6, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    // Advanced 3D-style body rendering with multiple lighting passes
-    
-    // Base ambient lighting
-    const ambientGradient = ctx.createRadialGradient(0, -animal.size * 0.3, 0, 0, 0, animal.size * 1.2);
-    ambientGradient.addColorStop(0, animalData.color + 'FF');
-    ambientGradient.addColorStop(0.4, animalData.color + 'E0');
-    ambientGradient.addColorStop(0.8, animalData.secondaryColor + 'C0');
-    ambientGradient.addColorStop(1, animalData.secondaryColor + '60');
-    ctx.fillStyle = ambientGradient;
+    // Enhanced body with gradient for depth
+    const bodyGradient = ctx.createRadialGradient(0, -animal.size * 0.2, 0, 0, 0, animal.size * 1.2);
+    bodyGradient.addColorStop(0, animalData.color);
+    bodyGradient.addColorStop(0.6, animalData.color);
+    bodyGradient.addColorStop(1, animalData.secondaryColor + 'CC');
+    ctx.fillStyle = bodyGradient;
     ctx.beginPath();
     ctx.ellipse(0, 0, animal.size, animal.size * 0.6, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    // Subsurface scattering effect (light penetrating through the fish)
-    const subsurfaceGradient = ctx.createRadialGradient(
-      animal.size * 0.3, -animal.size * 0.1, 0,
-      animal.size * 0.3, -animal.size * 0.1, animal.size * 0.8
-    );
-    subsurfaceGradient.addColorStop(0, '#FFE4B5' + '40');
-    subsurfaceGradient.addColorStop(0.5, animalData.color + '20');
-    subsurfaceGradient.addColorStop(1, 'transparent');
-    
-    ctx.fillStyle = subsurfaceGradient;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, animal.size, animal.size * 0.6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Specular highlight (wet skin reflection)
-    const specularGradient = ctx.createRadialGradient(
+    // Specular highlight with subtle gradient
+    const highlightGradient = ctx.createRadialGradient(
       animal.size * 0.2, -animal.size * 0.25, 0,
-      animal.size * 0.2, -animal.size * 0.25, animal.size * 0.4
+      animal.size * 0.2, -animal.size * 0.25, animal.size * 0.35
     );
-    specularGradient.addColorStop(0, '#FFFFFF' + 'AA');
-    specularGradient.addColorStop(0.3, '#FFFFFF' + '60');
-    specularGradient.addColorStop(0.6, '#FFFFFF' + '20');
-    specularGradient.addColorStop(1, 'transparent');
-    
-    ctx.fillStyle = specularGradient;
+    highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+    highlightGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)');
+    highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = highlightGradient;
     ctx.beginPath();
     ctx.ellipse(
       animal.size * 0.2, -animal.size * 0.25,
@@ -2342,104 +2355,29 @@ const DeepIOGame = () => {
     );
     ctx.fill();
     
-    // Rim lighting (backlighting effect)
-    ctx.strokeStyle = '#FFFFFF' + '30';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(-animal.size * 0.8, 0, animal.size * 0.1, animal.size * 0.5, 0, 0, Math.PI * 2);
-    ctx.stroke();
+    // Highly optimized scales - solid colors instead of gradients
+    const scaleSize = animal.size * 0.07;
+    const scaleRows = Math.floor(animal.size * 0.06); // Further reduced
     
-    // Ultra-high quality scales with advanced 3D rendering
-    const scaleSize = animal.size * 0.05;
-    const scaleRows = Math.floor(animal.size * 0.18);
-    const lightAngle = Math.PI * 0.25; // Light direction for scale normals
+    const fishBaseColor = hexToRgb(animalData.color);
     
     for (let row = 0; row < scaleRows; row++) {
       const rowY = -animal.size * 0.4 + (row / scaleRows) * animal.size * 0.8;
-      const scalesInRow = Math.floor(animal.size * 0.25) + Math.abs(Math.sin(row * 0.5)) * 6;
+      const scalesInRow = Math.floor(animal.size * 0.1); // Further reduced
       
       for (let col = 0; col < scalesInRow; col++) {
         const offsetX = (row % 2) * scaleSize * 0.5;
         const scaleX = -animal.size * 0.7 + offsetX + (col / scalesInRow) * animal.size * 1.4;
-        const scaleY = rowY + Math.sin(scaleX * 0.08 + time) * 3;
+        const scaleY = rowY;
         
-        // Calculate scale normal for lighting
-        const bodyNormalX = scaleX / animal.size;
-        const bodyNormalY = (scaleY * 2) / animal.size;
-        const normalLength = Math.sqrt(bodyNormalX * bodyNormalX + bodyNormalY * bodyNormalY);
-        const normX = bodyNormalX / normalLength;
-        const normY = bodyNormalY / normalLength;
+        // Simple solid color based on position
+        const lightDot = Math.max(0.5, (scaleX / animal.size) * 0.5 + 0.7);
+        ctx.fillStyle = `rgba(${Math.floor(fishBaseColor.r * lightDot)}, ${Math.floor(fishBaseColor.g * lightDot)}, ${Math.floor(fishBaseColor.b * lightDot)}, 0.8)`;
         
-        // Calculate lighting intensity based on normal
-        const lightDot = Math.max(0, normX * Math.cos(lightAngle) + normY * Math.sin(lightAngle));
-        const lightIntensity = 0.3 + lightDot * 0.7;
-        
-        // Base scale with 3D shading
-        const scaleGradient = ctx.createRadialGradient(
-          scaleX - scaleSize * 0.3, scaleY - scaleSize * 0.3, 0,
-          scaleX, scaleY, scaleSize * 1.2
-        );
-        
-        const baseColor = hexToRgb(animalData.color);
-        const shadedColor = {
-          r: Math.floor(baseColor.r * lightIntensity),
-          g: Math.floor(baseColor.g * lightIntensity),
-          b: Math.floor(baseColor.b * lightIntensity)
-        };
-        
-        scaleGradient.addColorStop(0, `rgba(${shadedColor.r + 40}, ${shadedColor.g + 40}, ${shadedColor.b + 40}, 0.9)`);
-        scaleGradient.addColorStop(0.4, `rgba(${shadedColor.r}, ${shadedColor.g}, ${shadedColor.b}, 0.8)`);
-        scaleGradient.addColorStop(0.8, `rgba(${shadedColor.r - 20}, ${shadedColor.g - 20}, ${shadedColor.b - 20}, 0.6)`);
-        scaleGradient.addColorStop(1, `rgba(${shadedColor.r - 40}, ${shadedColor.g - 40}, ${shadedColor.b - 40}, 0.3)`);
-        
-        ctx.fillStyle = scaleGradient;
         ctx.beginPath();
         ctx.ellipse(scaleX, scaleY, scaleSize, scaleSize * 0.75, Math.PI * 0.15, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Scale edge with depth
-        ctx.strokeStyle = `rgba(${shadedColor.r - 60}, ${shadedColor.g - 60}, ${shadedColor.b - 60}, 0.4)`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        
-        // Iridescent reflection based on viewing angle
-        const iridescenceIntensity = Math.abs(Math.sin(scaleX * 0.2 + scaleY * 0.15 + time * 2)) * lightIntensity;
-        if (iridescenceIntensity > 0.6) {
-          const iridColors = ['#FF69B4', '#00CED1', '#FFD700', '#98FB98'];
-          const colorIndex = Math.floor((scaleX + scaleY) * 0.1) % iridColors.length;
-          
-          ctx.fillStyle = iridColors[colorIndex] + Math.floor(iridescenceIntensity * 80).toString(16).padStart(2, '0');
-          ctx.beginPath();
-          ctx.ellipse(
-            scaleX - scaleSize * 0.2, scaleY - scaleSize * 0.2,
-            scaleSize * 0.4, scaleSize * 0.2,
-            Math.PI * 0.3, 0, Math.PI * 2
-          );
-          ctx.fill();
-        }
-        
-        // Micro-detail: scale ridges
-        if (scaleSize > 3) {
-          ctx.strokeStyle = `rgba(255, 255, 255, ${lightIntensity * 0.3})`;
-          ctx.lineWidth = 0.5;
-          for (let ridge = 0; ridge < 3; ridge++) {
-            const ridgeOffset = (ridge - 1) * scaleSize * 0.2;
-            ctx.beginPath();
-            ctx.moveTo(scaleX - scaleSize * 0.3, scaleY + ridgeOffset);
-            ctx.lineTo(scaleX + scaleSize * 0.3, scaleY + ridgeOffset);
-            ctx.stroke();
-          }
-        }
       }
-    }
-    
-    // Add scale depth by drawing overlapping shadows
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-    for (let row = 1; row < scaleRows; row++) {
-      const rowY = -animal.size * 0.4 + (row / scaleRows) * animal.size * 0.8;
-      ctx.beginPath();
-      ctx.ellipse(0, rowY - scaleSize * 0.1, animal.size * 0.9, scaleSize * 0.3, 0, 0, Math.PI * 2);
-      ctx.fill();
     }
     
     // Animated tail with swimming motion
@@ -2473,294 +2411,115 @@ const DeepIOGame = () => {
     ctx.closePath();
     ctx.fill();
     
-    // Ultra-realistic pectoral fins with advanced 3D rendering
+    // Highly optimized pectoral fins - simple solid shapes
     const finSway = Math.sin(time * 6) * 0.25;
     const finFlutter = Math.sin(time * 12) * 0.08;
-    const finTransparency = 0.85 + Math.sin(time * 8) * 0.15;
     
-    // Right pectoral fin with multi-layer rendering
+    // Right pectoral fin - enhanced with gradient
     ctx.save();
     ctx.translate(animal.size * 0.1, animal.size * 0.3);
     ctx.rotate(finSway + finFlutter);
     
-    // Render multiple fin layers for depth
-    for (let layer = 0; layer < 3; layer++) {
-      const layerScale = 1 - layer * 0.12;
-      const layerOffset = layer * 2;
-      const layerAlpha = finTransparency - layer * 0.15;
-      
-      // Advanced fin membrane with 3D lighting
-      const finGradient = ctx.createRadialGradient(
-        -animal.size * 0.08, -animal.size * 0.05, 0,
-        0, 0, animal.size * 0.35 * layerScale
-      );
-      
-      const baseColor = hexToRgb(layer === 0 ? animalData.color : animalData.secondaryColor);
-      const lightIntensity = 0.7 + layer * 0.15;
-      const shadowIntensity = 0.4 - layer * 0.1;
-      
-      finGradient.addColorStop(0, `rgba(${baseColor.r + 50}, ${baseColor.g + 50}, ${baseColor.b + 50}, ${layerAlpha})`);
-      finGradient.addColorStop(0.2, `rgba(${Math.floor(baseColor.r * lightIntensity)}, ${Math.floor(baseColor.g * lightIntensity)}, ${Math.floor(baseColor.b * lightIntensity)}, ${layerAlpha * 0.9})`);
-      finGradient.addColorStop(0.6, `rgba(${Math.floor(baseColor.r * shadowIntensity)}, ${Math.floor(baseColor.g * shadowIntensity)}, ${Math.floor(baseColor.b * shadowIntensity)}, ${layerAlpha * 0.7})`);
-      finGradient.addColorStop(1, `rgba(${Math.floor(baseColor.r * 0.3)}, ${Math.floor(baseColor.g * 0.3)}, ${Math.floor(baseColor.b * 0.3)}, 0.1)`);
-      
-      ctx.fillStyle = finGradient;
-      ctx.beginPath();
-      
-      // Create organic fin shape with precise curves
-      const finWidth = animal.size * 0.32 * layerScale;
-      const finHeight = animal.size * 0.18 * layerScale;
-      
-      // Draw natural fin membrane shape
-      ctx.moveTo(-finWidth * 0.7, -finHeight * 0.2);
-      ctx.bezierCurveTo(-finWidth * 0.4, -finHeight * 0.9, finWidth * 0.2, -finHeight * 0.8, finWidth * 0.85, -finHeight * 0.1);
-      ctx.bezierCurveTo(finWidth * 0.9, finHeight * 0.1, finWidth * 0.6, finHeight * 0.8, finWidth * 0.1, finHeight * 0.9);
-      ctx.bezierCurveTo(-finWidth * 0.2, finHeight * 0.6, -finWidth * 0.5, finHeight * 0.2, -finWidth * 0.7, -finHeight * 0.2);
-      ctx.fill();
-      
-      // Add translucent membrane highlights
-      if (layer === 0) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.beginPath();
-        ctx.ellipse(-finWidth * 0.15, -finHeight * 0.1, finWidth * 0.12, finHeight * 0.06, Math.PI * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.beginPath();
-        ctx.ellipse(finWidth * 0.3, 0, finWidth * 0.08, finHeight * 0.04, Math.PI * 0.1, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
+    const finGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, animal.size * 0.28);
+    finGradient.addColorStop(0, animalData.color + 'DD');
+    finGradient.addColorStop(0.6, animalData.color + '99');
+    finGradient.addColorStop(1, animalData.secondaryColor + '44');
+    ctx.fillStyle = finGradient;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, animal.size * 0.28, animal.size * 0.14, 0, 0, Math.PI * 2);
+    ctx.fill();
     
-    // Advanced fin ray structure with realistic bone appearance
-    const rayColor = hexToRgb(animalData.secondaryColor);
-    for (let ray = 0; ray < 8; ray++) {
-      const rayAngle = -Math.PI * 0.4 + (ray / 7) * Math.PI * 0.8;
-      const rayLength = animal.size * (0.22 + ray * 0.015);
-      const rayThickness = 2.5 - ray * 0.2;
-      
-      // Ray shadow for depth
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-      ctx.lineWidth = rayThickness + 1;
-      ctx.beginPath();
-      ctx.moveTo(1, 1);
-      ctx.lineTo(Math.cos(rayAngle) * rayLength + 1, Math.sin(rayAngle) * rayLength + 1);
-      ctx.stroke();
-      
-      // Main ray structure
-      ctx.strokeStyle = `rgba(${rayColor.r}, ${rayColor.g}, ${rayColor.b}, 0.9)`;
-      ctx.lineWidth = rayThickness;
+    // Fin rays for detail
+    ctx.strokeStyle = animalData.secondaryColor + '66';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      const angle = -Math.PI * 0.3 + (i / 3) * Math.PI * 0.6;
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(rayAngle) * rayLength, Math.sin(rayAngle) * rayLength);
+      ctx.lineTo(Math.cos(angle) * animal.size * 0.24, Math.sin(angle) * animal.size * 0.12);
       ctx.stroke();
-      
-      // Ray highlight
-      ctx.strokeStyle = `rgba(255, 255, 255, 0.5)`;
-      ctx.lineWidth = rayThickness * 0.4;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(rayAngle) * rayLength * 0.8, Math.sin(rayAngle) * rayLength * 0.8);
-      ctx.stroke();
-      
-      // Micro-detail: ray segments
-      for (let segment = 1; segment < 4; segment++) {
-        const segmentPos = segment / 4;
-        const segmentX = Math.cos(rayAngle) * rayLength * segmentPos;
-        const segmentY = Math.sin(rayAngle) * rayLength * segmentPos;
-        
-        ctx.strokeStyle = `rgba(${rayColor.r - 30}, ${rayColor.g - 30}, ${rayColor.b - 30}, 0.6)`;
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(segmentX - 2, segmentY);
-        ctx.lineTo(segmentX + 2, segmentY);
-        ctx.stroke();
-      }
     }
     
     ctx.restore();
     
-    // Left pectoral fin with matching 3D enhancement
+    // Left pectoral fin - enhanced with gradient
     ctx.save();
     ctx.translate(animal.size * 0.1, -animal.size * 0.3);
     ctx.rotate(-finSway - finFlutter);
     
-    // Render multiple fin layers for depth (mirrored)
-    for (let layer = 0; layer < 3; layer++) {
-      const layerScale = 1 - layer * 0.12;
-      const layerOffset = layer * 2;
-      const layerAlpha = finTransparency - layer * 0.15;
-      
-      // Advanced fin membrane with 3D lighting
-      const finGradient = ctx.createRadialGradient(
-        -animal.size * 0.08, animal.size * 0.05, 0,
-        0, 0, animal.size * 0.35 * layerScale
-      );
-      
-      const baseColor = hexToRgb(layer === 0 ? animalData.color : animalData.secondaryColor);
-      const lightIntensity = 0.7 + layer * 0.15;
-      const shadowIntensity = 0.4 - layer * 0.1;
-      
-      finGradient.addColorStop(0, `rgba(${baseColor.r + 50}, ${baseColor.g + 50}, ${baseColor.b + 50}, ${layerAlpha})`);
-      finGradient.addColorStop(0.2, `rgba(${Math.floor(baseColor.r * lightIntensity)}, ${Math.floor(baseColor.g * lightIntensity)}, ${Math.floor(baseColor.b * lightIntensity)}, ${layerAlpha * 0.9})`);
-      finGradient.addColorStop(0.6, `rgba(${Math.floor(baseColor.r * shadowIntensity)}, ${Math.floor(baseColor.g * shadowIntensity)}, ${Math.floor(baseColor.b * shadowIntensity)}, ${layerAlpha * 0.7})`);
-      finGradient.addColorStop(1, `rgba(${Math.floor(baseColor.r * 0.3)}, ${Math.floor(baseColor.g * 0.3)}, ${Math.floor(baseColor.b * 0.3)}, 0.1)`);
-      
-      ctx.fillStyle = finGradient;
-      ctx.beginPath();
-      
-      // Create organic fin shape with precise curves (mirrored)
-      const finWidth = animal.size * 0.32 * layerScale;
-      const finHeight = animal.size * 0.18 * layerScale;
-      
-      ctx.moveTo(-finWidth * 0.7, finHeight * 0.2);
-      ctx.bezierCurveTo(-finWidth * 0.4, finHeight * 0.9, finWidth * 0.2, finHeight * 0.8, finWidth * 0.85, finHeight * 0.1);
-      ctx.bezierCurveTo(finWidth * 0.9, -finHeight * 0.1, finWidth * 0.6, -finHeight * 0.8, finWidth * 0.1, -finHeight * 0.9);
-      ctx.bezierCurveTo(-finWidth * 0.2, -finHeight * 0.6, -finWidth * 0.5, -finHeight * 0.2, -finWidth * 0.7, finHeight * 0.2);
-      ctx.fill();
-      
-      // Add translucent membrane highlights
-      if (layer === 0) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.beginPath();
-        ctx.ellipse(-finWidth * 0.15, finHeight * 0.1, finWidth * 0.12, finHeight * 0.06, -Math.PI * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.beginPath();
-        ctx.ellipse(finWidth * 0.3, 0, finWidth * 0.08, finHeight * 0.04, -Math.PI * 0.1, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
+    const finGradient2 = ctx.createRadialGradient(0, 0, 0, 0, 0, animal.size * 0.28);
+    finGradient2.addColorStop(0, animalData.color + 'DD');
+    finGradient2.addColorStop(0.6, animalData.color + '99');
+    finGradient2.addColorStop(1, animalData.secondaryColor + '44');
+    ctx.fillStyle = finGradient2;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, animal.size * 0.28, animal.size * 0.14, 0, 0, Math.PI * 2);
+    ctx.fill();
     
-    // Advanced fin ray structure with realistic bone appearance
-    for (let ray = 0; ray < 8; ray++) {
-      const rayAngle = Math.PI * 0.4 - (ray / 7) * Math.PI * 0.8;
-      const rayLength = animal.size * (0.22 + ray * 0.015);
-      const rayThickness = 2.5 - ray * 0.2;
-      
-      // Ray shadow for depth
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-      ctx.lineWidth = rayThickness + 1;
-      ctx.beginPath();
-      ctx.moveTo(1, -1);
-      ctx.lineTo(Math.cos(rayAngle) * rayLength + 1, Math.sin(rayAngle) * rayLength - 1);
-      ctx.stroke();
-      
-      // Main ray structure
-      ctx.strokeStyle = `rgba(${rayColor.r}, ${rayColor.g}, ${rayColor.b}, 0.9)`;
-      ctx.lineWidth = rayThickness;
+    // Fin rays for detail
+    ctx.strokeStyle = animalData.secondaryColor + '66';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      const angle = -Math.PI * 0.3 + (i / 3) * Math.PI * 0.6;
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(rayAngle) * rayLength, Math.sin(rayAngle) * rayLength);
+      ctx.lineTo(Math.cos(angle) * animal.size * 0.24, Math.sin(angle) * animal.size * 0.12);
       ctx.stroke();
-      
-      // Ray highlight
-      ctx.strokeStyle = `rgba(255, 255, 255, 0.5)`;
-      ctx.lineWidth = rayThickness * 0.4;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(rayAngle) * rayLength * 0.8, Math.sin(rayAngle) * rayLength * 0.8);
-      ctx.stroke();
-      
-      // Micro-detail: ray segments
-      for (let segment = 1; segment < 4; segment++) {
-        const segmentPos = segment / 4;
-        const segmentX = Math.cos(rayAngle) * rayLength * segmentPos;
-        const segmentY = Math.sin(rayAngle) * rayLength * segmentPos;
-        
-        ctx.strokeStyle = `rgba(${rayColor.r - 30}, ${rayColor.g - 30}, ${rayColor.b - 30}, 0.6)`;
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(segmentX - 2, segmentY);
-        ctx.lineTo(segmentX + 2, segmentY);
-        ctx.stroke();
-      }
     }
     
     ctx.restore();
     
-    // Enhanced fin rays for left fin continuation
-    for (let ray = 0; ray < 7; ray++) {
-      const rayAngle = Math.PI * 0.3 - (ray / 6) * Math.PI * 0.6;
-      const rayLength = animal.size * 0.25;
-      ctx.beginPath();
-      ctx.moveTo(animal.size * 0.1, -animal.size * 0.3);
-      ctx.lineTo(
-        animal.size * 0.1 + Math.cos(rayAngle) * rayLength,
-        -animal.size * 0.3 + Math.sin(rayAngle) * rayLength
-      );
-      ctx.stroke();
-    }
-    ctx.restore();
-    
-    // Hyper-realistic eye with multiple layers and reflections
+    // Enhanced eye rendering with gradients
     const eyeX = animal.size * 0.3;
     const eyeY = -animal.size * 0.15;
     const eyeSize = animal.size * 0.18;
-    const eyeTracking = Math.sin(time * 2) * 0.02; // Subtle eye movement
     
     // Eye socket shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
     ctx.beginPath();
-    ctx.arc(eyeX + 1, eyeY + 1, eyeSize * 1.1, 0, Math.PI * 2);
+    ctx.arc(eyeX + 1, eyeY + 1, eyeSize * 1.05, 0, Math.PI * 2);
     ctx.fill();
     
-    // Sclera (white of eye) with slight coloration
+    // Eye white with subtle gradient
     const scleraGradient = ctx.createRadialGradient(eyeX, eyeY, 0, eyeX, eyeY, eyeSize);
     scleraGradient.addColorStop(0, '#FFFFFF');
-    scleraGradient.addColorStop(0.8, '#F0F8FF');
-    scleraGradient.addColorStop(1, '#E6E6FA');
+    scleraGradient.addColorStop(0.85, '#F5F5F5');
+    scleraGradient.addColorStop(1, '#E0E0E0');
     ctx.fillStyle = scleraGradient;
     ctx.beginPath();
     ctx.arc(eyeX, eyeY, eyeSize, 0, Math.PI * 2);
     ctx.fill();
     
-    // Iris with detailed pattern and depth
+    // Iris with gradient for depth
     const irisGradient = ctx.createRadialGradient(
-      eyeX + eyeTracking, eyeY + eyeTracking, 0,
-      eyeX + eyeTracking, eyeY + eyeTracking, eyeSize * 0.7
+      eyeX, eyeY, 0,
+      eyeX, eyeY, eyeSize * 0.7
     );
-    irisGradient.addColorStop(0, '#4169E1');
-    irisGradient.addColorStop(0.3, '#0000CD');
-    irisGradient.addColorStop(0.6, '#191970');
-    irisGradient.addColorStop(1, '#000080');
+    irisGradient.addColorStop(0, '#5090D3');
+    irisGradient.addColorStop(0.4, '#4169E1');
+    irisGradient.addColorStop(0.8, '#1E3A8A');
+    irisGradient.addColorStop(1, '#0F172A');
     ctx.fillStyle = irisGradient;
     ctx.beginPath();
-    ctx.arc(eyeX + eyeTracking, eyeY + eyeTracking, eyeSize * 0.7, 0, Math.PI * 2);
+    ctx.arc(eyeX, eyeY, eyeSize * 0.7, 0, Math.PI * 2);
     ctx.fill();
     
-    // Iris texture lines (radial pattern)
-    ctx.strokeStyle = '#000080' + '40';
-    ctx.lineWidth = 0.5;
-    for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI * 2;
-      const innerRadius = eyeSize * 0.2;
-      const outerRadius = eyeSize * 0.65;
-      ctx.beginPath();
-      ctx.moveTo(
-        eyeX + eyeTracking + Math.cos(angle) * innerRadius,
-        eyeY + eyeTracking + Math.sin(angle) * innerRadius
-      );
-      ctx.lineTo(
-        eyeX + eyeTracking + Math.cos(angle) * outerRadius,
-        eyeY + eyeTracking + Math.sin(angle) * outerRadius
-      );
-      ctx.stroke();
-    }
-    
-    // Pupil with slight animation (breathing/focusing)
-    const pupilSize = eyeSize * (0.35 + Math.sin(time * 3) * 0.05);
+    // Pupil
     ctx.fillStyle = '#000000';
     ctx.beginPath();
-    ctx.arc(eyeX + eyeTracking, eyeY + eyeTracking, pupilSize, 0, Math.PI * 2);
+    ctx.arc(eyeX, eyeY, eyeSize * 0.35, 0, Math.PI * 2);
     ctx.fill();
     
-    // Multiple eye highlights for realism
     // Primary highlight
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
-    ctx.arc(eyeX + eyeSize * 0.3, eyeY - eyeSize * 0.3, eyeSize * 0.15, 0, Math.PI * 2);
+    ctx.arc(eyeX + eyeSize * 0.25, eyeY - eyeSize * 0.25, eyeSize * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Secondary highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.beginPath();
+    ctx.arc(eyeX - eyeSize * 0.15, eyeY + eyeSize * 0.15, eyeSize * 0.1, 0, Math.PI * 2);
     ctx.fill();
     
     // Secondary highlight
@@ -3028,49 +2787,27 @@ const DeepIOGame = () => {
     ctx.fill();
     ctx.globalAlpha = 1;
     
-    // Outer bell with bioluminescent glow
+    // Enhanced bell with bioluminescent glow and gradient
     ctx.shadowColor = animalData.color;
-    ctx.shadowBlur = 15;
-    ctx.fillStyle = animalData.color + '60';
-    ctx.globalAlpha = 0.8;
-    ctx.beginPath();
-    ctx.arc(0, 0, animal.size * pulseSize * 1.2, 0, Math.PI);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
+    ctx.shadowBlur = 20;
     
-    // Main bell with translucent effect
-    const bellGradient = ctx.createRadialGradient(0, -animal.size * 0.3, 0, 0, 0, animal.size);
-    bellGradient.addColorStop(0, animalData.color + 'AA');
-    bellGradient.addColorStop(0.5, animalData.color + '80');
-    bellGradient.addColorStop(1, animalData.secondaryColor + '40');
+    const bellGradient = ctx.createRadialGradient(0, -animal.size * 0.2, 0, 0, 0, animal.size);
+    bellGradient.addColorStop(0, animalData.color + 'EE');
+    bellGradient.addColorStop(0.4, animalData.color + 'BB');
+    bellGradient.addColorStop(0.7, animalData.secondaryColor + '88');
+    bellGradient.addColorStop(1, animalData.secondaryColor + '44');
     ctx.fillStyle = bellGradient;
-    ctx.globalAlpha = 0.9;
+    ctx.globalAlpha = 0.95;
     ctx.beginPath();
     ctx.arc(0, 0, animal.size * pulseSize, 0, Math.PI);
     ctx.fill();
     ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
     
-    // Bell patterns (radial lines)
-    ctx.strokeStyle = animalData.secondaryColor + '60';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI;
-      const x1 = Math.cos(angle) * animal.size * 0.3;
-      const y1 = Math.sin(angle) * animal.size * 0.3;
-      const x2 = Math.cos(angle) * animal.size * 0.9 * pulseSize;
-      const y2 = Math.sin(angle) * animal.size * 0.9 * pulseSize;
-      
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-    }
-    
-    // Bell rim
+    // Bell rim with glow
     ctx.strokeStyle = animalData.color;
     ctx.lineWidth = 3;
-    ctx.globalAlpha = 0.8;
+    ctx.globalAlpha = 0.9;
     ctx.beginPath();
     ctx.arc(0, 0, animal.size * pulseSize, 0, Math.PI);
     ctx.stroke();
@@ -3563,84 +3300,6 @@ const DeepIOGame = () => {
     
     ctx.shadowBlur = 0;
     ctx.textAlign = 'left';
-    
-    // CINEMATIC POST-PROCESSING EFFECTS
-    const finalCtx = canvas.getContext('2d');
-    
-    // 1. Apply Bloom Effect
-    finalCtx.save();
-    finalCtx.globalCompositeOperation = 'screen';
-    finalCtx.filter = 'blur(8px) brightness(1.5) contrast(1.2)';
-    finalCtx.globalAlpha = 0.3;
-    finalCtx.drawImage(offscreenCanvas, 0, 0);
-    finalCtx.restore();
-    
-    // 2. Base Image
-    finalCtx.globalCompositeOperation = 'source-over';
-    finalCtx.filter = 'contrast(1.1) saturate(1.15)';
-    finalCtx.drawImage(offscreenCanvas, 0, 0);
-    
-    // 3. Color Grading - Cinematic Blue Tint
-    finalCtx.save();
-    finalCtx.globalCompositeOperation = 'overlay';
-    finalCtx.fillStyle = 'rgba(70, 130, 180, 0.08)';
-    finalCtx.fillRect(0, 0, canvas.width, canvas.height);
-    finalCtx.restore();
-    
-    // 4. Depth of Field Effect (simulate underwater blur at edges)
-    const dofCenterX = canvas.width / 2;
-    const dofCenterY = canvas.height / 2;
-    const maxRadius = Math.sqrt(dofCenterX * dofCenterX + dofCenterY * dofCenterY);
-    
-    const dofGradient = finalCtx.createRadialGradient(
-      dofCenterX, dofCenterY, maxRadius * 0.3,
-      dofCenterX, dofCenterY, maxRadius
-    );
-    dofGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    dofGradient.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
-    dofGradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)');
-    
-    finalCtx.save();
-    finalCtx.globalCompositeOperation = 'multiply';
-    finalCtx.fillStyle = dofGradient;
-    finalCtx.fillRect(0, 0, canvas.width, canvas.height);
-    finalCtx.restore();
-    
-    // 5. Chromatic Aberration Effect (subtle)
-    finalCtx.save();
-    finalCtx.globalCompositeOperation = 'screen';
-    finalCtx.globalAlpha = 0.05;
-    
-    // Red channel offset
-    finalCtx.filter = 'sepia(1) hue-rotate(0deg) saturate(2)';
-    finalCtx.drawImage(offscreenCanvas, -1, 0);
-    
-    // Blue channel offset  
-    finalCtx.filter = 'sepia(1) hue-rotate(240deg) saturate(2)';
-    finalCtx.drawImage(offscreenCanvas, 1, 0);
-    
-    finalCtx.restore();
-    
-    // 6. Film Grain Effect
-    finalCtx.save();
-    finalCtx.globalCompositeOperation = 'overlay';
-    finalCtx.globalAlpha = 0.03;
-    
-    const imageData = finalCtx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    
-    for (let i = 0; i < data.length; i += 4) {
-      const grain = (Math.random() - 0.5) * 60;
-      data[i] += grain;     // R
-      data[i + 1] += grain; // G  
-      data[i + 2] += grain; // B
-    }
-    
-    finalCtx.putImageData(imageData, 0, 0);
-    finalCtx.restore();
-    
-    // Reset filter
-    finalCtx.filter = 'none';
   };
 
   const EvolutionMenu = () => {
