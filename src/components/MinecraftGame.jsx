@@ -894,6 +894,7 @@ const MinecraftGame = () => {
             
             // Create scene
             game.scene = new THREE.Scene();
+            game.scene.background = new THREE.Color(0x87CEEB); // Light blue sky background
             
             // Create camera
             game.camera = new THREE.PerspectiveCamera(
@@ -917,6 +918,9 @@ const MinecraftGame = () => {
             game.renderer.setSize(window.innerWidth, window.innerHeight);
             game.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             
+            // Set background color to light blue sky
+            game.renderer.setClearColor(0x87CEEB, 1);
+            
             // Ultra-enhanced shadow settings
             game.renderer.shadowMap.enabled = true;
             game.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -925,7 +929,7 @@ const MinecraftGame = () => {
             // Premium rendering settings
             game.renderer.outputColorSpace = THREE.SRGBColorSpace;
             game.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            game.renderer.toneMappingExposure = 1.3;
+            game.renderer.toneMappingExposure = 1.0;
             
             // Enhanced visual quality
             game.renderer.physicallyCorrectLights = true;
@@ -981,6 +985,22 @@ const MinecraftGame = () => {
             // Set up lighting
             setupLighting();
             
+            // Add a test cube to verify rendering works
+            const testGeometry = new THREE.BoxGeometry(2, 2, 2);
+            const testMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xff0000, 
+                wireframe: false,
+                side: THREE.DoubleSide 
+            });
+            const testCube = new THREE.Mesh(testGeometry, testMaterial);
+            testCube.position.set(WORLD_WIDTH/2, 11, WORLD_DEPTH/2 - 3); // Right in front of player
+            testCube.frustumCulled = false; // Disable culling
+            game.scene.add(testCube);
+            console.log('Test cube added at:', testCube.position);
+            console.log('Player will be at:', WORLD_WIDTH/2, 12, WORLD_DEPTH/2);
+            console.log('Camera far plane:', game.camera.far);
+            console.log('Scene children count:', game.scene.children.length);
+            
             setLoadingText('Generating Terrain...');
             setLoadingProgress(80);
             // Generate terrain (now async)
@@ -1004,6 +1024,12 @@ const MinecraftGame = () => {
             // Initialize raycaster
             game.raycaster = new THREE.Raycaster();
             game.mouse = new THREE.Vector2();
+            
+            // Set initial camera position and look direction
+            game.camera.position.copy(game.player.position);
+            game.camera.lookAt(WORLD_WIDTH/2, 11, WORLD_DEPTH/2 - 10);
+            console.log('Camera position set to:', game.camera.position);
+            console.log('Camera rotation:', game.camera.rotation);
             
             setLoadingText('Ready!');
             setLoadingProgress(100);
@@ -1197,17 +1223,17 @@ const MinecraftGame = () => {
     const setupLighting = () => {
         const game = gameRef.current;
         
-        // Ultra-enhanced ambient lighting with color temperature
-        const ambientLight = new THREE.AmbientLight(0x87CEEB, 0.3);
+        // Brighter ambient lighting for better visibility
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         game.scene.add(ambientLight);
         
         // Hemisphere light for natural sky lighting
-        const hemisphereLight = new THREE.HemisphereLight(0x87CEEB, 0x8B4513, 0.4);
+        const hemisphereLight = new THREE.HemisphereLight(0x87CEEB, 0x8B4513, 0.6);
         hemisphereLight.position.set(0, 50, 0);
         game.scene.add(hemisphereLight);
         
         // Main directional light (sun) with enhanced properties
-        const directionalLight = new THREE.DirectionalLight(0xFFFAF0, 1.2);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
         directionalLight.position.set(100, 150, 50);
         directionalLight.castShadow = true;
         
@@ -1228,17 +1254,17 @@ const MinecraftGame = () => {
             game.directionalLight = directionalLight;        game.scene.add(directionalLight);
         
         // Warm fill light for realistic lighting
-        const fillLight = new THREE.DirectionalLight(0xFFB347, 0.25);
+        const fillLight = new THREE.DirectionalLight(0xFFFFFF, 0.4);
         fillLight.position.set(-50, 30, -40);
         game.scene.add(fillLight);
         
         // Rim light for object definition
-        const rimLight = new THREE.DirectionalLight(0xE6E6FA, 0.15);
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
         rimLight.position.set(0, 20, -100);
         game.scene.add(rimLight);
         
-        // Enhanced atmospheric fog with exponential falloff
-        game.scene.fog = new THREE.FogExp2(0x87CEEB, 0.008);
+        // Reduced fog for better visibility
+        game.scene.fog = new THREE.FogExp2(0x87CEEB, 0.003);
         
         // Add volumetric light effect (god rays simulation)
         const volumetricGeometry = new THREE.PlaneGeometry(200, 200);
@@ -1614,6 +1640,11 @@ const MinecraftGame = () => {
         
         game.scene.add(block);
         game.blocks.set(`${x},${y},${z}`, block);
+        
+        // Log first few blocks
+        if (game.blocks.size <= 5) {
+            console.log(`Block ${game.blocks.size} added:`, blockType, 'at', x, y, z);
+        }
     };
 
     const setupControls = () => {
@@ -2324,9 +2355,12 @@ const MinecraftGame = () => {
         game.player.phi = THREE.MathUtils.lerp(game.player.phi, game.player.targetPhi, CAMERA_SMOOTHING);
         game.player.theta = THREE.MathUtils.lerp(game.player.theta, game.player.targetTheta, CAMERA_SMOOTHING);
         
-        // Update camera position and rotation
+        // Update camera position and rotation with proper first-person view
         game.camera.position.copy(game.player.position);
-        game.camera.rotation.set(game.player.phi, game.player.theta, 0);
+        game.camera.rotation.order = 'YXZ';
+        game.camera.rotation.y = game.player.theta;
+        game.camera.rotation.x = game.player.phi;
+        game.camera.rotation.z = 0;
     };
 
     const getGroundLevel = (x, z) => {
@@ -2362,6 +2396,7 @@ const MinecraftGame = () => {
             // Ultra-premium rendering with post-processing
             if (game.composer) {
                 // First render the scene to get depth information
+                game.renderer.clear();
                 game.renderer.setRenderTarget(game.composer.readBuffer);
                 game.renderer.render(game.scene, game.camera);
                 
@@ -2369,6 +2404,7 @@ const MinecraftGame = () => {
                 game.composer.render();
             } else {
                 // Fallback to regular rendering
+                game.renderer.clear();
                 game.renderer.render(game.scene, game.camera);
             }
         }

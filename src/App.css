@@ -5,3 +5,163 @@
   height: 100vh;
   overflow: hidden;
 }
+
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.menu-title {
+  font-size: 4em;
+  color: white;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.menu-subtitle {
+  font-size: 1.5em;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 50px;
+}
+
+.game-cards {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 1200px;
+}
+
+.game-card {
+  width: 300px;
+  height: 350px;
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.game-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.game-card.fps::before {
+  background: linear-gradient(90deg, #ff6b6b, #ee5a6f);
+}
+
+.game-card.minecraft::before {
+  background: linear-gradient(90deg, #4ecdc4, #44a08d);
+}
+
+.game-card.chess::before {
+  background: linear-gradient(90deg, #8b4513, #d2691e);
+}
+
+.game-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.game-icon {
+  font-size: 5em;
+  margin-bottom: 20px;
+}
+
+.game-title {
+  font-size: 2em;
+  color: #333;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.game-description {
+  text-align: center;
+  color: #666;
+  font-size: 1.1em;
+  margin-bottom: 20px;
+  flex-grow: 1;
+}
+
+.game-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 15px 40px;
+  border-radius: 30px;
+  font-weight: bold;
+  font-size: 1.1em;
+  transition: all 0.3s ease;
+}
+
+.game-card.fps .game-button {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+}
+
+.game-card.minecraft .game-button {
+  background: linear-gradient(135deg, #4ecdc4, #44a08d);
+}
+
+.game-card.chess .game-button {
+  background: linear-gradient(135deg, #8b4513, #d2691e);
+}
+
+.game-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.back-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  padding: 12px 24px;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: white;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(-5px);
+}
+
+@media (max-width: 768px) {
+  .menu-title {
+    font-size: 2.5em;
+  }
+
+  .game-cards {
+    flex-direction: column;
+  }
+
+  .game-card {
+    width: 90%;
+    max-width: 350px;
+  }
+}
